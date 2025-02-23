@@ -50,21 +50,29 @@ class ManagementGame:
             if len(bids) == 0:
                 break
 
-            best_player_id = min(bids, key=bids.get)
+            # Whoose deal to fulfill
+            best_player_id = max(bids, key=lambda p_id: bids[p_id][1])
             
+            # Define the quantity of the sold to the player
             sold: int = 0
             if bids[best_player_id][0] <= raws_to_sell:
                 sold = bids[best_player_id][0]
             else:
                 sold = raws_to_sell
+            
+            # Collect payment
+            p.money -= sold * bids[best_player_id][1]
+            # Give raws to the player
+            p.raw += sold
 
             print(f"(Bank) {sold} raws -> {
                     self.get_player_by_id(best_player_id).name
                 } for ${ sold * bids[best_player_id][1] } (${bids[best_player_id][1]} each)")
             
             raws_to_sell -= sold
-
             bids.pop(best_player_id)
+
+
 
     def finish_month(self):
         print(f"\nMonth {self.month} end results:\n")
