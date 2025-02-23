@@ -52,7 +52,8 @@ class ManagementGame:
 
             # Whoose deal to fulfill
             best_player_id = max(bids, key=lambda p_id: bids[p_id][1])
-            
+            best_player = self.get_player_by_id(best_player_id)
+
             # Define the quantity of the sold to the player
             sold: int = 0
             if bids[best_player_id][0] <= raws_to_sell:
@@ -61,17 +62,46 @@ class ManagementGame:
                 sold = raws_to_sell
             
             # Collect payment
-            p.money -= sold * bids[best_player_id][1]
+            best_player.money -= sold * bids[best_player_id][1]
             # Give raws to the player
-            p.raw += sold
+            best_player.raw += sold
 
             print(f"(Bank) {sold} raws -> {
-                    self.get_player_by_id(best_player_id).name
+                    best_player.name
                 } for ${ sold * bids[best_player_id][1] } (${bids[best_player_id][1]} each)")
             
             raws_to_sell -= sold
             bids.pop(best_player_id)
 
+    def buy_goods(self):
+        goods_to_buy = self.get_bank_buying_info()[0]
+        bids: dict = self.product_bids.copy()
+
+        while goods_to_buy > 0:
+            if len(bids) == 0:
+                break
+
+            # Whoose deal to fulfill
+            best_player_id = min(bids, key=lambda p_id: bids[p_id][1])
+            best_player = self.get_player_by_id(best_player_id)
+            
+            # Define the quantity of the bought from the player
+            bought: int = 0
+            if bids[best_player_id][0] <= goods_to_buy:
+                bought = bids[best_player_id][0]
+            else:
+                bought = goods_to_buy
+            
+            # Collect goods
+            best_player.product -= bought
+            # Pay money
+            best_player.money += bought * bids[best_player_id][1]
+
+            print(f"({best_player.name}) {bought} goods -> (Bank) for "
+                f"${ bought * bids[best_player_id][1] } (${bids[best_player_id][1]} each)")
+            
+            goods_to_buy -= bought
+            bids.pop(best_player_id)
 
 
     def finish_month(self):
@@ -80,19 +110,23 @@ class ManagementGame:
         raw_info = self.get_bank_selling_info()
         good_info = self.get_bank_buying_info()
 
-        print(f"Bank sells {raw_info[0]} raw materials starting at ${raw_info[1]}.")
         print(f"Bank was going to sell {raw_info[0]} raws starting at ${raw_info[1]}")
         print(f"\nBids were:\n====================")
         for _, (player_id, bid) in enumerate(self.raw_bids.items()):
-            print(f"{self.get_player_by_id(player_id).name} wants to buy {bid[0]} raws for ${bid[1]}")
+            print(f"{self.get_player_by_id(player_id).name} wants to buy {bid[0]} raws for ${bid[1]} each")
         print("====================\n")
 
         self.sell_raws()
 
+        print(f"\nBank is looking to buy {good_info[0]} goods paying max ${good_info[1]} per each.\n")
+        print(f"\nBids were:\n====================")
+        for _, (player_id, bid) in enumerate(self.product_bids.items()):
+            print(f"{self.get_player_by_id(player_id).name} wants to sell {bid[0]} goods for ${bid[1]} each")
+        print("====================\n")
 
+        self.buy_goods()
         
-
-        print(f"\nBank buys {good_info[0]} goods paying max ${good_info[1]}.\n")
+        print(f"\nMonth {self.month} finished!\n")
 
     def get_player_by_id(self, id: int) -> "Player":
         return next((p for p in self.players if p.id == id), None)
@@ -156,12 +190,19 @@ if __name__ == "__main__":
 
         # raw_num_request = input("Enter the number of raw material you are ready to buy(0-x): ")
         # raw_price_request = input("Enter the price of raw material you want to buy: ")
-        raw_num_request = int(input("Raw material, how many are you ready to buy(0-x): "))
-        raw_price_request = int(input("Raw material, the price you are ready to buy 1 quantity: "))
-        product_sell_num = input("Product, how many do you want to sell: ")
-        product_sell_price = input("Product, the price you want to sell 1 quantity at: ")
+        try:
+            raw_num_request = int(input("Raw material, how many are you ready to buy(0-x): "))
+            raw_price_request = int(input("Raw material, the price you are ready to buy 1 quantity: "))
+            mangame.raw_bids[p.id] = (raw_num_request, raw_price_request)
+        except:
+            pass
 
-        mangame.raw_bids[p.id] = (raw_num_request, raw_price_request)
+        try:
+            product_sell_num = int(input("Product, how many do you want to sell: "))
+            product_sell_price = int(input("Product, the price you want to sell 1 quantity at: "))
+            mangame.product_bids[p.id] = (product_sell_num, product_sell_price)
+        except:
+            pass
 
         print("Turn finished.")
 
