@@ -11,11 +11,26 @@ class ManagementGame:
         self.building_requests = {}   # Player id to number of factories constructions initiated
         
     def print_info(self):
-        print(f"\nMonth {self.month}")
+        print(f"\n === Month {self.month} ===\n")
+
         raw_info = self.get_bank_selling_info()
         good_info = self.get_bank_buying_info()
+        print(f"Economy level: {self.economy_level}")
         print(f"Bank sells {raw_info[0]} raw materials starting at ${raw_info[1]}.")
         print(f"Bank buys {good_info[0]} goods paying max ${good_info[1]}.\n")
+
+        print("===== Player info =====")
+        for player in self.players:
+            print(f"{player.name} has")
+            print(f"{player.get_working_factory_count()} active factories")
+            print(f"${player.money} money")
+            print(f"{player.raw} raw materials")
+            print(f"{player.product} products")
+            for f in player.get_list_of_unfinished_factories():
+                print(f"A factory will be ready in {f} months.")
+            print()
+        print("======================")
+
 
     def get_number_of_non_bankrupt_players(self) -> int:
         return len(list(filter(lambda p : p.money > 0, self.players)))
@@ -156,7 +171,14 @@ class ManagementGame:
         print()
         self.handle_production_orders()
 
+        # Reset orders
+        self.building_requests.clear()
+        self.product_bids.clear()
+        self.raw_bids.clear()
+        self.production_requests.clear()
+
         print(f"\nMonth {self.month} finished!\n")
+        self.month += 1
 
     def get_player_by_id(self, id: int) -> "Player":
         return next((p for p in self.players if p.id == id), None)
@@ -187,6 +209,9 @@ class Player:
     
     def get_working_factory_count(self) -> int:
         return len(list(filter(lambda f : f <= 0, self.factories)))
+    
+    def get_list_of_unfinished_factories(self) -> list[int]:
+        return list(filter(lambda f : f >= 1, self.factories))
     
     def print_info(self):
         print("You have:")
@@ -223,7 +248,7 @@ if __name__ == "__main__":
             # assert(produce_request >= 0 and produce_request <= p.get_working_factory_count())
 
             # print()
-            p.print_info()
+            #p.print_info()
 
             print("Do you want to build a factory?")
             print("The factory will start operating in 5 months "
