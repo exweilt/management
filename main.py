@@ -33,7 +33,10 @@ class ManagementGame:
 
 
     def get_number_of_non_bankrupt_players(self) -> int:
-        return len(list(filter(lambda p : p.money > 0, self.players)))
+        return len(self.get_list_of_non_bankrupt_players())
+    
+    def get_list_of_non_bankrupt_players(self) -> list["Player"]:
+        return list(filter(lambda p : p.money > 0, self.players))
     
     def get_bank_selling_info(self) -> tuple[int, int]:
         """
@@ -70,11 +73,8 @@ class ManagementGame:
             best_player = self.get_player_by_id(best_player_id)
 
             # Define the quantity of the sold to the player
-            sold: int = 0
-            if bids[best_player_id][0] <= raws_to_sell:
-                sold = bids[best_player_id][0]
-            else:
-                sold = raws_to_sell
+            sold: int = min(bids[best_player_id][0], raws_to_sell)
+            sold = min(sold, best_player.money // 2000) 
             
             # Collect payment
             best_player.money -= sold * bids[best_player_id][1]
@@ -124,19 +124,21 @@ class ManagementGame:
             player = self.get_player_by_id(p_id)
             prod_num = min(prod_num, player.get_working_factory_count())
 
-            max_possible_order = player.money // 2000
+            max_possible_order = max(0, player.money // 2000)
             max_possible_order = min(max_possible_order, player.raw)
 
-            player.money -= max_possible_order * 2000
-            player.raw -= max_possible_order
-            player.product += max_possible_order
+            actual_n = min(prod_num, max_possible_order)
 
-            if max_possible_order >= prod_num:
+            player.money -= actual_n * 2000
+            player.raw -= actual_n
+            player.product += actual_n
+
+            if actual_n >= prod_num:
                 print(f"{player.name} produces {prod_num} products (-${2000*prod_num}) (-{prod_num} raws)")
             else:
                 print(
                     f"{player.name} ordered production of {prod_num} products but only able "
-                    f"to produce {max_possible_order} (-${2000*max_possible_order}) (-{max_possible_order} raws)"
+                    f"to produce {actual_n} (-${2000*actual_n}) (-{actual_n} raws)"
                 )
         print("=== Finished production ============") 
 
@@ -149,7 +151,7 @@ class ManagementGame:
         good_info = self.get_bank_buying_info()
 
         print(f"Bank was going to sell {raw_info[0]} raws starting at ${raw_info[1]}")
-        print(f"\nBids were:\n=====================================")
+        print(f"Bids were:\n=====================================")
         for _, (player_id, bid) in enumerate(self.raw_bids.items()):
             print(f"{self.get_player_by_id(player_id).name} wants to buy {bid[0]} raws for ${bid[1]} each")
         print("=====================================\n")
@@ -282,3 +284,6 @@ if __name__ == "__main__":
             print("Turn finished.")
 
         mangame.finish_month()
+    
+    winner = mangame.get_list_of_non_bankrupt_players()[0]
+    print(f"{winner.name} won!")
