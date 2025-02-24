@@ -102,6 +102,28 @@ class ManagementGame:
             
             goods_to_buy -= bought
             bids.pop(best_player_id)
+    
+    def handle_production_orders(self):
+        print("=== Processing production orders ===")
+        for p_id, prod_num in self.production_requests.items():
+            player = self.get_player_by_id(p_id)
+            prod_num = min(prod_num, player.get_working_factory_count())
+
+            max_possible_order = player.money // 2000
+            max_possible_order = min(max_possible_order, player.raw)
+
+            player.money -= max_possible_order * 2000
+            player.raw -= max_possible_order
+            player.product += max_possible_order
+
+            if max_possible_order >= prod_num:
+                print(f"{player.name} produces {prod_num} products (-${2000*prod_num}) (-{prod_num} raws)")
+            else:
+                print(
+                    f"{player.name} ordered production of {prod_num} products but only able "
+                    f"to produce {max_possible_order} (-${2000*max_possible_order}) (-{max_possible_order} raws)"
+                )
+        print("=== Finished production ============") 
 
 
     def finish_month(self):
@@ -130,7 +152,10 @@ class ManagementGame:
 
         print("===============================")
         self.order_factories()
-        
+
+        print()
+        self.handle_production_orders()
+
         print(f"\nMonth {self.month} finished!\n")
 
     def get_player_by_id(self, id: int) -> "Player":
@@ -189,9 +214,12 @@ if __name__ == "__main__":
 
             p.print_info()
 
-            print("\nA factory can produce 1 goods, using 1 raw material and $2000.")
-            produce_request = input(f"How many factories do you want to produce goods (0-{p.get_working_factory_count()}):")
-            
+            print("\nA factory: 1 raw + $2000 -> 1 product")
+            produce_request: str = input(f"Number of factories you want to use (0-{p.get_working_factory_count()}):")
+            if produce_request.isdigit():
+                produce_number: int = int(produce_request)
+                mangame.production_requests[p.id] = produce_number
+
             # assert(produce_request >= 0 and produce_request <= p.get_working_factory_count())
 
             # print()
