@@ -105,31 +105,50 @@ class ManagementGame:
 
 
     def finish_month(self):
+        print("\n=======================================")
         print(f"\nMonth {self.month} end results:\n")
 
         raw_info = self.get_bank_selling_info()
         good_info = self.get_bank_buying_info()
 
         print(f"Bank was going to sell {raw_info[0]} raws starting at ${raw_info[1]}")
-        print(f"\nBids were:\n====================")
+        print(f"\nBids were:\n=====================================")
         for _, (player_id, bid) in enumerate(self.raw_bids.items()):
             print(f"{self.get_player_by_id(player_id).name} wants to buy {bid[0]} raws for ${bid[1]} each")
-        print("====================\n")
+        print("=====================================\n")
 
         self.sell_raws()
 
-        print(f"\nBank is looking to buy {good_info[0]} goods paying max ${good_info[1]} per each.\n")
+        print("====================================")
+        print(f"\nBank is looking to buy {good_info[0]} goods paying max ${good_info[1]} per each.")
         print(f"\nBids were:\n====================")
         for _, (player_id, bid) in enumerate(self.product_bids.items()):
             print(f"{self.get_player_by_id(player_id).name} wants to sell {bid[0]} goods for ${bid[1]} each")
         print("====================\n")
 
         self.buy_goods()
+
+        print("===============================")
+        self.order_factories()
         
         print(f"\nMonth {self.month} finished!\n")
 
     def get_player_by_id(self, id: int) -> "Player":
         return next((p for p in self.players if p.id == id), None)
+
+    def order_factories(self):
+        print("=== Ordering Building Factories ===")
+        for p_id, factory_number in self.building_requests.items():
+            player = self.get_player_by_id(p_id)
+
+            if player.money >= 2500:
+                player.factories.append(5)
+                player.money -= 2500
+                print(f"{player.name} ordered a factory construction (-$2500)")
+            else:
+                print(f"{player.name} asked for factory construction but had not enough funds (only ${player.money})")
+        print("=== Factories have been ordered ===")
+
 
 class Player:
     def __init__(self, name, id):
@@ -159,51 +178,54 @@ if __name__ == "__main__":
         Player("Alex", 1),
         Player("Jool", 2)
     ]
+    
+    while mangame.get_number_of_non_bankrupt_players() > 1:
+        mangame.print_info()
 
-    mangame.print_info()
+        # mangame.poll
+        for p in mangame.players:
+            print("\n=====================================================\n")
+            print(f"{p.name}, its your turn!\n")
 
-    # mangame.poll
-    for p in mangame.players:
-        print("\n\n=====================================================\n")
-        print(f"{p.name}, its your turn!\n")
+            p.print_info()
 
-        p.print_info()
+            print("\nA factory can produce 1 goods, using 1 raw material and $2000.")
+            produce_request = input(f"How many factories do you want to produce goods (0-{p.get_working_factory_count()}):")
+            
+            # assert(produce_request >= 0 and produce_request <= p.get_working_factory_count())
 
-        print("\nA factory can produce 1 goods, using 1 raw material and $2000.")
-        produce_request = input(f"How many factories do you want to produce goods (0-{p.get_working_factory_count()}):")
-        
-        # assert(produce_request >= 0 and produce_request <= p.get_working_factory_count())
+            # print()
+            p.print_info()
 
-        # print()
-        p.print_info()
+            print("Do you want to build a factory?")
+            print("The factory will start operating in 5 months "
+                "and will cost you $2500 now and $2500 a month before the finishing of the construction.")
+            factory_build_request: str = input("(y/n): ")
+            if factory_build_request.lower() == "y":
+                mangame.building_requests[p.id] = 1
 
-        print("\nWould you like to build a factory?")
-        print("The factory will start operating in 5 months "
-            "and will cost you $2500 now and $2500 a month before the finishing of the construction.")
-        factory_build_request = input("(y/n): ")
+            print("\nNow it's time to make the bids on the auction!")
+            raw_info = mangame.get_bank_selling_info()
+            good_info = mangame.get_bank_buying_info()
+            print(f"Bank sells {raw_info[0]} raw materials starting at ${raw_info[1]}.")
+            print(f"Bank buys {good_info[0]} goods paying max ${good_info[1]}.")
 
-        print("\nNow it's time to make the bids on the auction!")
-        raw_info = mangame.get_bank_selling_info()
-        good_info = mangame.get_bank_buying_info()
-        print(f"Bank sells {raw_info[0]} raw materials starting at ${raw_info[1]}.")
-        print(f"Bank buys {good_info[0]} goods paying max ${good_info[1]}.")
+            # raw_num_request = input("Enter the number of raw material you are ready to buy(0-x): ")
+            # raw_price_request = input("Enter the price of raw material you want to buy: ")
+            try:
+                raw_num_request = int(input("Raw material, how many are you ready to buy(0-x): "))
+                raw_price_request = int(input("Raw material, the price you are ready to buy 1 quantity: "))
+                mangame.raw_bids[p.id] = (raw_num_request, raw_price_request)
+            except:
+                pass
 
-        # raw_num_request = input("Enter the number of raw material you are ready to buy(0-x): ")
-        # raw_price_request = input("Enter the price of raw material you want to buy: ")
-        try:
-            raw_num_request = int(input("Raw material, how many are you ready to buy(0-x): "))
-            raw_price_request = int(input("Raw material, the price you are ready to buy 1 quantity: "))
-            mangame.raw_bids[p.id] = (raw_num_request, raw_price_request)
-        except:
-            pass
+            try:
+                product_sell_num = int(input("Product, how many do you want to sell: "))
+                product_sell_price = int(input("Product, the price you want to sell 1 quantity at: "))
+                mangame.product_bids[p.id] = (product_sell_num, product_sell_price)
+            except:
+                pass
 
-        try:
-            product_sell_num = int(input("Product, how many do you want to sell: "))
-            product_sell_price = int(input("Product, the price you want to sell 1 quantity at: "))
-            mangame.product_bids[p.id] = (product_sell_num, product_sell_price)
-        except:
-            pass
+            print("Turn finished.")
 
-        print("Turn finished.")
-
-    mangame.finish_month()
+        mangame.finish_month()
