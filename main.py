@@ -1,5 +1,6 @@
 from management_game import Player, ManagementGame
 from constants import *
+from utils import fmt_dollars as d, fmt_bold as b
 
 if __name__ == "__main__":
     mangame = ManagementGame()
@@ -14,12 +15,12 @@ if __name__ == "__main__":
 
         # mangame.poll
         for p in mangame.get_list_of_non_bankrupt_players():
-            print("\n=====================================================\n")
-            print(f"{p.name}, its your turn!\n")
+            print(f"\n{b("=====================================================")}\n")
+            print(f"{b(p.name)}, its your turn!\n")
 
             p.print_info()
 
-            print(f"\nA factory: 1 raw + ${PRODUCTION_PRICE} -> 1 product")
+            print(f"\nA factory: 1 raw + {d(PRODUCTION_PRICE)} -> 1 product")
             produce_request: str = input(f"Number of factories you want to use (0-{p.get_working_factory_count()}):")
             if produce_request.isdigit():
                 produce_number: int = int(produce_request)
@@ -31,8 +32,8 @@ if __name__ == "__main__":
             #p.print_info()
 
             print("Do you want to build a factory?")
-            print(f"The factory will start operating in 5 months "
-                "and will cost you ${FACTORY_HALFPRICE} now and ${FACTORY_HALFPRICE} a month before the finishing of the construction.")
+            print(f"The factory will start operating in {b(5)} months "
+                f"and will cost you {d(FACTORY_HALFPRICE)} now and {d(FACTORY_HALFPRICE)} a month before the finishing of the construction.")
             factory_build_request: str = input("(y/n): ")
             if factory_build_request.lower() == "y":
                 mangame.building_requests[p.id] = 1
@@ -40,8 +41,8 @@ if __name__ == "__main__":
             print("\nNow it's time to make the bids on the auction!")
             raw_info = mangame.get_bank_selling_info()
             good_info = mangame.get_bank_buying_info()
-            print(f"Bank sells {raw_info[0]} raw materials starting at ${raw_info[1]}.")
-            print(f"Bank buys {good_info[0]} goods paying max ${good_info[1]}.")
+            print(f"Bank sells {raw_info[0]} raw materials starting at {d(raw_info[1])}.")
+            print(f"Bank buys {good_info[0]} goods paying max {d(good_info[1])}.")
 
             # raw_num_request = input("Enter the number of raw material you are ready to buy(0-x): ")
             # raw_price_request = input("Enter the price of raw material you want to buy: ")

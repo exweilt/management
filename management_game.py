@@ -1,5 +1,6 @@
 from math import floor
 from constants import *
+from utils import fmt_dollars as d, fmt_bold as b
 
 class ManagementGame:
     def __init__(self):
@@ -12,19 +13,19 @@ class ManagementGame:
         self.building_requests = {}   # Player id to number of factories constructions initiated
         
     def print_info(self):
-        print(f"\n === Month {self.month} ===\n")
+        print(f"\n {b(f"=== Month {self.month} ===")}\n")
 
         raw_info = self.get_bank_selling_info()
         good_info = self.get_bank_buying_info()
-        print(f"Economy level: {self.economy_level}")
-        print(f"Bank sells {raw_info[0]} raw materials starting at ${raw_info[1]}.")
-        print(f"Bank buys {good_info[0]} goods paying max ${good_info[1]}.\n")
+        print(f"Economy level: {b(self.economy_level)}")
+        print(f"Bank sells {raw_info[0]} raw materials starting at {d(raw_info[1])}.")
+        print(f"Bank buys {good_info[0]} goods paying max {d(good_info[1])}.\n")
 
-        print("===== Player info =====")
+        print(b("===== Player info ====="))
         for player in self.players:
-            print(f"{player.name} has")
+            print(f"{b(player.name)} has")
             print(f"{player.get_working_factory_count()} active factories")
-            print(f"${player.money} money")
+            print(f"{d(player.money)} credits")
             print(f"{player.raw} raw materials")
             print(f"{player.product} products")
             for f in player.get_list_of_unfinished_factories():
@@ -86,7 +87,7 @@ class ManagementGame:
 
             print(f"(Bank) {sold} raws -> {
                     best_player.name
-                } for ${ sold * one_raw_price } (${one_raw_price} each)")
+                } for { d(sold * one_raw_price) } ({d(one_raw_price)} each)")
             
             raws_to_sell -= sold
             bids.pop(best_player_id)
@@ -116,13 +117,13 @@ class ManagementGame:
             best_player.money += bought * bids[best_player_id][1]
 
             print(f"({best_player.name}) {bought} goods -> (Bank) for "
-                f"${ bought * bids[best_player_id][1] } (${bids[best_player_id][1]} each)")
+                f"{ d(bought * bids[best_player_id][1]) } ({d(bids[best_player_id][1])} each)")
             
             goods_to_buy -= bought
             bids.pop(best_player_id)
     
     def handle_production_orders(self):
-        print("=== Processing production orders ===")
+        print(b("=== Processing production orders ==="))
         for p_id, prod_num in self.production_requests.items():
             player = self.get_player_by_id(p_id)
             prod_num = min(prod_num, player.get_working_factory_count())
@@ -137,35 +138,35 @@ class ManagementGame:
             player.product += actual_n
 
             if actual_n >= prod_num:
-                print(f"{player.name} produces {prod_num} products (-${PRODUCTION_PRICE*prod_num}) (-{prod_num} raws)")
+                print(f"{player.name} produces {prod_num} products (-{d(PRODUCTION_PRICE*prod_num)}) (-{prod_num} raws)")
             else:
                 print(
                     f"{player.name} ordered production of {prod_num} products but only able "
-                    f"to produce {actual_n} (-${PRODUCTION_PRICE*actual_n}) (-{actual_n} raws)"
+                    f"to produce {actual_n} (-{d(PRODUCTION_PRICE*actual_n)}) (-{actual_n} raws)"
                 )
         print("=== Finished production ============") 
 
 
     def finish_month(self):
-        print("\n=======================================")
-        print(f"\nMonth {self.month} end results:\n")
+        print(b("\n======================================="))
+        print(f"\nMonth {b(self.month)} end results:\n")
 
         raw_info = self.get_bank_selling_info()
         good_info = self.get_bank_buying_info()
 
-        print(f"Bank was going to sell {raw_info[0]} raws starting at ${raw_info[1]}")
+        print(f"Bank was going to sell {raw_info[0]} raws starting at {d(raw_info[1])}")
         print(f"Bids were:\n=====================================")
         for _, (player_id, bid) in enumerate(self.raw_bids.items()):
-            print(f"{self.get_player_by_id(player_id).name} wants to buy {bid[0]} raws for ${bid[1]} each")
+            print(f"{self.get_player_by_id(player_id).name} wants to buy {bid[0]} raws for {d(bid[1])} each")
         print("=====================================\n")
 
         self.sell_raws()
 
         print("====================================")
-        print(f"\nBank is looking to buy {good_info[0]} goods paying max ${good_info[1]} per each.")
+        print(f"\nBank is looking to buy {good_info[0]} goods paying max {d(good_info[1])} per each.")
         print(f"\nBids were:\n====================")
         for _, (player_id, bid) in enumerate(self.product_bids.items()):
-            print(f"{self.get_player_by_id(player_id).name} wants to sell {bid[0]} goods for ${bid[1]} each")
+            print(f"{self.get_player_by_id(player_id).name} wants to sell {bid[0]} goods for {d(bid[1])} each")
         print("====================\n")
 
         self.buy_goods()
@@ -193,20 +194,20 @@ class ManagementGame:
         return next((p for p in self.players if p.id == id), None)
 
     def order_factories(self):
-        print("=== Ordering Building Factories ===")
+        print(b("=== Ordering Building Factories ==="))
         for p_id, factory_number in self.building_requests.items():
             player = self.get_player_by_id(p_id)
 
             if player.money >= FACTORY_HALFPRICE:
                 player.factories.append(5)
                 player.money -= FACTORY_HALFPRICE
-                print(f"{player.name} ordered a factory construction (-${FACTORY_HALFPRICE})")
+                print(f"{player.name} ordered a factory construction (-{d(FACTORY_HALFPRICE)})")
             else:
                 print(f"{player.name} asked for factory construction but had not enough funds (only ${player.money})")
         print("=== Factories have been ordered ===")
 
     def handle_expenses(self) -> None:
-        print("=== Paying Expenses ===")
+        print(b("=== Paying Expenses ==="))
         nonbankrupts_before_paying = self.get_list_of_non_bankrupt_players()
         for idx, p in enumerate(nonbankrupts_before_paying):
             original_money = p.money
@@ -215,20 +216,21 @@ class ManagementGame:
             if p.raw > 0:
                 raws_expense = p.raw * EXPENSE_RAW
                 p.money -= raws_expense
-                expenses_str += f"Raw materials storage: -${raws_expense} = {p.raw}pc * ${EXPENSE_RAW}\n"
+                expenses_str += f"Raw materials storage: -{d(raws_expense)} = {p.raw}pc * {d(EXPENSE_RAW)}\n"
             
             if p.product > 0:
                 products_expense = p.product * EXPENSE_PRODUCT
                 p.money -= products_expense
-                expenses_str += f"Products storage: -${products_expense} = {p.product}pc * ${EXPENSE_PRODUCT}\n"
+                expenses_str += f"Products storage: -{d(products_expense)} = {p.product}pc * {d(EXPENSE_PRODUCT)}\n"
 
             if p.get_working_factory_count() > 0:
                 factory_n = p.get_working_factory_count()
                 factory_expense = factory_n * EXPENSE_FACTORY
                 p.money -= factory_expense
-                expenses_str += f"Factories maintenance: -${factory_expense} = {factory_n}pc * ${EXPENSE_FACTORY}"
+                expenses_str += f"Factories maintenance: -{d(factory_expense)} = {factory_n}pc * {d(EXPENSE_FACTORY)}"
             
-            print(f"{p.name}: ${original_money} -> ${p.money}")
+            print(f"{p.name}: {d(original_money)} -> {d(p.money)}")
+            print(f"Total: {d(-original_money + p.money)}")
             print(expenses_str)
             if idx == len(nonbankrupts_before_paying) - 1:
                 print() # Player separator
@@ -253,6 +255,6 @@ class Player:
     def print_info(self):
         print("You have:")
         print(f"{self.get_working_factory_count()} active factories")
-        print(f"${self.money} dollars")
-        print(f"{self.raw} raw materials")
+        print(f"{d(self.money)} dollars")
+        print(f"{b(self.raw)} raw materials")
         print(f"{self.product} goods")
