@@ -182,6 +182,10 @@ class ManagementGame:
         self.raw_bids.clear()
         self.production_requests.clear()
 
+        # Players pay expenses
+        self.handle_expenses()
+            
+
         print(f"\nMonth {self.month} finished!\n")
         self.month += 1
 
@@ -201,6 +205,34 @@ class ManagementGame:
                 print(f"{player.name} asked for factory construction but had not enough funds (only ${player.money})")
         print("=== Factories have been ordered ===")
 
+    def handle_expenses(self) -> None:
+        print("=== Paying Expenses ===")
+        nonbankrupts_before_paying = self.get_list_of_non_bankrupt_players()
+        for idx, p in enumerate(nonbankrupts_before_paying):
+            original_money = p.money
+            expenses_str: str = ""
+
+            if p.raw > 0:
+                raws_expense = p.raw * EXPENSE_RAW
+                p.money -= raws_expense
+                expenses_str += f"Raw materials storage: -${raws_expense} = {p.raw}pc * ${EXPENSE_RAW}\n"
+            
+            if p.product > 0:
+                products_expense = p.product * EXPENSE_PRODUCT
+                p.money -= products_expense
+                expenses_str += f"Products storage: -${products_expense} = {p.product}pc * ${EXPENSE_PRODUCT}\n"
+
+            if p.get_working_factory_count() > 0:
+                factory_n = p.get_working_factory_count()
+                factory_expense = factory_n * EXPENSE_FACTORY
+                p.money -= factory_expense
+                expenses_str += f"Factories maintenance: -${factory_expense} = {factory_n}pc * ${EXPENSE_FACTORY}"
+            
+            print(f"{p.name}: ${original_money} -> ${p.money}")
+            print(expenses_str)
+            if idx == len(nonbankrupts_before_paying) - 1:
+                print() # Player separator
+            print("=== Expenses paid ===")
 
 class Player:
     def __init__(self, name, id):
