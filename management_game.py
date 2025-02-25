@@ -159,7 +159,8 @@ class ManagementGame:
 
         print(f"Bank was going to sell {raw_info[0]} raws starting at {d(raw_info[1])}")
         print(f"Bids were:\n=====================================")
-        for player_id, bid in [ (p_id, turn["bid_raws"]) for (p_id, turn) in self.player_turns.items() if "bid_raws" in turn ]:
+        x = [ (p_id, turn["bid_raws"]) for (p_id, turn) in self.player_turns.items() if "bid_raws" in turn ]
+        for player_id, bid in x:
             print(f"{self.get_player_by_id(player_id).name} wants to buy {bid[0]} raws for {d(bid[1])} each")
         print("=====================================\n")
 
@@ -272,3 +273,9 @@ class PlayerTurnData(TypedDict):
     bid_products: tuple[int, int]       # (number, price_for_each)
     request_building: int               # Number of factories to build
     request_production: int             # Produce using n factories
+
+# class Message(TypedDict):
+#     bid_raws: tuple[int, int]           # (number, price_for_each)
+#     bid_products: tuple[int, int]       # (number, price_for_each)
+#     request_building: int               # Number of factories to build
+#     request_production: int             # Produce using n factories
