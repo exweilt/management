@@ -10,6 +10,34 @@ from utils import fmt_dollars as d, fmt_bold as b
 HOST = 'localhost'
 PORT = 12345
 
+def request_game_state(sock: socket.socket) -> str:
+    sock.send(json.dumps({
+        "type": "request_game_state"
+    }).encode())
+    
+
+    data = json.loads(sock.recv(1024))
+    assert(data["type"] == "response_game_state")
+
+    return data["game_state"]
+
+def wait_until_game_start(sock: socket.socket):
+    while True:
+        try:
+            data = json.loads(sock.recv(1024))
+            if data["type"] == "game_start":
+                break
+        except:
+            pass
+
+def wait_until_month_finish(sock: socket.socket):
+    while True:
+        try:
+            data = json.loads(sock.recv(1024))
+            if data["type"] == "month_finish":
+                break
+        except:
+            pass
 
 if __name__ == "__main__":
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -18,12 +46,19 @@ if __name__ == "__main__":
     print("Connected.")
     name = input("Enter your name: ")
 
-    client_socket.send(json.dumps({
+    
+    client_socket.send((json.dumps({
         "type": "register_player",
         "name": name
-    }).encode())
+    }) + "\0").encode())
+
+    wait_until_game_start(client_socket)
 
     while True:
+        game_state = request_game_state(client_socket)
+        mangame = ManagementGame.from_dict(game_state)
+        mangame.print_info()
+
         player_turn: PlayerTurnData = {}
 
         print(f"\nA factory: 1 raw + {d(PRODUCTION_PRICE)} -> 1 product")
@@ -67,6 +102,12 @@ if __name__ == "__main__":
             "type": "register_turn",
             "turn": player_turn
         }).encode())
+
+        wait_until_month_finish(client_socket)
+
+        # game_state = request_game_state(client_socket)
+        # mangame = ManagementGame.from_dict(game_state)
+
 
         # mangame.register_player_turn(p.id, player_turn)
 

@@ -13,6 +13,22 @@ class ManagementGame:
         # self.production_requests = {} # Player id to number of factories producing
         # self.building_requests = {}   # Player id to number of factories constructions initiated
         self.player_turns: dict[int, "PlayerTurnData"] = {}
+
+    def to_dict(self):
+        return {
+            "players": [p.to_dict() for p in self.players],
+            "month": self.month,
+            "economy_level": self.month
+        }
+    
+    @classmethod
+    def from_dict(cls, data: dict):
+        game = cls()
+        game.players = [Player.from_dict(p) for p in data["players"]]
+        game.month = data["month"]
+        game.economy_level = data["economy_level"]
+
+        return game
         
     def print_info(self):
         print(f"\n {b(f"=== Month {self.month} ===")}\n")
@@ -35,6 +51,29 @@ class ManagementGame:
             print()
         print("======================")
 
+    def get_info(self):
+        result = ""
+        result += f"\n {b(f"=== Month {self.month} ===")}\n\n"
+
+        raw_info = self.get_bank_selling_info()
+        good_info = self.get_bank_buying_info()
+        result += f"Economy level: {b(self.economy_level)}\n"
+        result += f"Bank sells {raw_info[0]} raw materials starting at {d(raw_info[1])}.\n"
+        result += f"Bank buys {good_info[0]} goods paying max {d(good_info[1])}.\n\n"
+
+        result += b("===== Player info =====\n")
+        for player in self.players:
+            result += f"{b(player.name)} has\n"
+            result += f"{player.get_working_factory_count()} active factories\n"
+            result += f"{d(player.money)} credits\n"
+            result += f"{player.raw} raw materials\n"
+            result += f"{player.product} products\n"
+            for f in player.get_list_of_unfinished_factories():
+                result += f"A factory will be ready in {f} months.\n"
+            result += "\n"
+        result += "======================\n"
+
+        return result
 
     def get_number_of_non_bankrupt_players(self) -> int:
         return len(self.get_list_of_non_bankrupt_players())
@@ -190,6 +229,7 @@ class ManagementGame:
         print(f"\nMonth {self.month} finished!\n")
         self.month += 1
 
+
     def get_player_by_id(self, id: int) -> "Player":
         return next((p for p in self.players if p.id == id), None)
 
@@ -254,6 +294,26 @@ class Player:
         self.product = 2
         # size of the list = number of factories. Each factory time to be built is number in the list
         self.factories: list[int] = [0, 0]
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "id": self.id,
+            "money": self.money,
+            "raw": self.raw,
+            "product": self.product,
+            "factories": self.factories
+        }
+    
+    @classmethod
+    def from_dict(cls, data: dict):
+        p = cls(data["name"], data["id"])
+        p.money = data["money"]
+        p.raw = data["raw"]
+        p.product = data["product"]
+        p.factories = data["factories"]
+        
+        return p
     
     def get_working_factory_count(self) -> int:
         return len(list(filter(lambda f : f <= 0, self.factories)))
