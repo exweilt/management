@@ -84,7 +84,7 @@ if __name__ == "__main__":
                         mangame.register_player_turn(notified_socket.fileno(), msg["turn"])
                         if month_before != mangame.month:
                             for client in clients:
-                                client.send(json.dumps({"type": "finish_month"}).encode())
+                                client.send(json.dumps({"type": "month_finish"}).encode())
 
                     if msg["type"] == "request_game_state":
                         # print(mangame.get_info())

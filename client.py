@@ -15,8 +15,9 @@ def request_game_state(sock: socket.socket) -> str:
         "type": "request_game_state"
     }).encode())
     
-
-    data = json.loads(sock.recv(1024))
+    data = sock.recv(5096).decode("utf-8")
+    # print(data)
+    data = json.loads(data)
     assert(data["type"] == "response_game_state")
 
     return data["game_state"]
@@ -54,9 +55,9 @@ if __name__ == "__main__":
 
     wait_until_game_start(client_socket)
 
+    game_state = request_game_state(client_socket)
+    mangame = ManagementGame.from_dict(game_state)
     while True:
-        game_state = request_game_state(client_socket)
-        mangame = ManagementGame.from_dict(game_state)
         mangame.print_info()
 
         player_turn: PlayerTurnData = {}
@@ -105,9 +106,9 @@ if __name__ == "__main__":
 
         wait_until_month_finish(client_socket)
 
-        # game_state = request_game_state(client_socket)
-        # mangame = ManagementGame.from_dict(game_state)
+        mangame = ManagementGame.from_dict(request_game_state(client_socket))
 
+        print(mangame.out)
 
         # mangame.register_player_turn(p.id, player_turn)
 

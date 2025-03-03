@@ -13,12 +13,15 @@ class ManagementGame:
         # self.production_requests = {} # Player id to number of factories producing
         # self.building_requests = {}   # Player id to number of factories constructions initiated
         self.player_turns: dict[int, "PlayerTurnData"] = {}
+        self.out = ""
 
     def to_dict(self):
         return {
             "players": [p.to_dict() for p in self.players],
             "month": self.month,
-            "economy_level": self.month
+            "economy_level": self.economy_level,
+            "player_turns": self.player_turns,
+            "out": self.out
         }
     
     @classmethod
@@ -27,6 +30,8 @@ class ManagementGame:
         game.players = [Player.from_dict(p) for p in data["players"]]
         game.month = data["month"]
         game.economy_level = data["economy_level"]
+        game.player_turns = data["player_turns"]
+        game.out = data["out"]
 
         return game
         
@@ -126,9 +131,9 @@ class ManagementGame:
             # Give raws to the player
             best_player.raw += sold
 
-            print(f"(Bank) {sold} raws -> {
+            self.out += f"(Bank) {sold} raws -> {
                     best_player.name
-                } for { d(sold * one_raw_price) } ({d(one_raw_price)} each)")
+                } for { d(sold * one_raw_price) } ({d(one_raw_price)} each)\n"
             
             raws_to_sell -= sold
             bids.pop(best_player_id)
@@ -157,14 +162,14 @@ class ManagementGame:
             # Pay money
             best_player.money += bought * bids[best_player_id][1]
 
-            print(f"({best_player.name}) {bought} goods -> (Bank) for "
-                f"{ d(bought * bids[best_player_id][1]) } ({d(bids[best_player_id][1])} each)")
+            self.out += (f"({best_player.name}) {bought} goods -> (Bank) for "
+                f"{ d(bought * bids[best_player_id][1]) } ({d(bids[best_player_id][1])} each)\n")
             
             goods_to_buy -= bought
             bids.pop(best_player_id)
     
     def handle_production_orders(self):
-        print(b("=== Processing production orders ==="))
+        self.out += b("=== Processing production orders ===") + "\n"
         production_requests = [(p_id, turn["request_production"]) for (p_id, turn) in self.player_turns.items() if "request_production" in turn]
         for p_id, prod_num in production_requests:
             player = self.get_player_by_id(p_id)
@@ -180,44 +185,44 @@ class ManagementGame:
             player.product += actual_n
 
             if actual_n >= prod_num:
-                print(f"{player.name} produces {prod_num} products (-{d(PRODUCTION_PRICE*prod_num)}) (-{prod_num} raws)")
+                self.out += f"{player.name} produces {prod_num} products (-{d(PRODUCTION_PRICE*prod_num)}) (-{prod_num} raws)\n"
             else:
-                print(
+                self.out += (
                     f"{player.name} ordered production of {prod_num} products but only able "
-                    f"to produce {actual_n} (-{d(PRODUCTION_PRICE*actual_n)}) (-{actual_n} raws)"
+                    f"to produce {actual_n} (-{d(PRODUCTION_PRICE*actual_n)}) (-{actual_n} raws)\n"
                 )
-        print("=== Finished production ============") 
+        self.out += "=== Finished production ============\n\n"
 
 
     def finish_month(self):
-        print(b("\n======================================="))
-        print(f"\nMonth {b(self.month)} end results:\n")
+        self.out = b("\n=======================================") + "\n"
+        self.out += f"\nMonth {b(self.month)} end results:\n\n"
 
         raw_info = self.get_bank_selling_info()
         good_info = self.get_bank_buying_info()
 
-        print(f"Bank was going to sell {raw_info[0]} raws starting at {d(raw_info[1])}")
-        print(f"Bids were:\n=====================================")
+        self.out += f"Bank was going to sell {raw_info[0]} raws starting at {d(raw_info[1])}\n"
+        self.out += f"Bids were:\n=====================================\n"
         x = [ (p_id, turn["bid_raws"]) for (p_id, turn) in self.player_turns.items() if "bid_raws" in turn ]
         for player_id, bid in x:
-            print(f"{self.get_player_by_id(player_id).name} wants to buy {bid[0]} raws for {d(bid[1])} each")
-        print("=====================================\n")
+            self.out += f"{self.get_player_by_id(player_id).name} wants to buy {bid[0]} raws for {d(bid[1])} each\n\n"
+        self.out += "=====================================\n\n"
 
         self.sell_raws()
 
-        print("====================================")
-        print(f"\nBank is looking to buy {good_info[0]} goods paying max {d(good_info[1])} per each.")
-        print(f"\nBids were:\n====================")
+        self.out += "====================================\n"
+        self.out += f"\nBank is looking to buy {good_info[0]} goods paying max {d(good_info[1])} per each.\n"
+        self.out += f"\nBids were:\n====================\n"
         for player_id, bid in [ (p_id, turn["bid_products"]) for (p_id, turn) in self.player_turns.items() if "bid_products" in turn ]:
-            print(f"{self.get_player_by_id(player_id).name} wants to sell {bid[0]} goods for {d(bid[1])} each")
-        print("====================\n")
+            self.out += f"{self.get_player_by_id(player_id).name} wants to sell {bid[0]} goods for {d(bid[1])} each\n"
+        self.out += "====================\n\n"
 
         self.buy_goods()
 
-        print("===============================")
+        self.out += "===============================\n"
         self.order_factories()
 
-        print()
+        self.out += "\n"
         self.handle_production_orders()
 
         # Reset orders
@@ -226,7 +231,7 @@ class ManagementGame:
         # Players pay expenses
         self.handle_expenses()
 
-        print(f"\nMonth {self.month} finished!\n")
+        self.out += f"\nMonth {self.month} finished!\n\n"
         self.month += 1
 
 
@@ -234,7 +239,7 @@ class ManagementGame:
         return next((p for p in self.players if p.id == id), None)
 
     def order_factories(self):
-        print(b("=== Ordering Building Factories ==="))
+        self.out += b("=== Ordering Building Factories ===") + "\n"
         building_requests = [ (p_id, turn["request_building"]) for (p_id, turn) in self.player_turns.items() if "request_building" in turn ]
         for p_id, factory_number in building_requests:
             player = self.get_player_by_id(p_id)
@@ -242,13 +247,13 @@ class ManagementGame:
             if player.money >= FACTORY_HALFPRICE:
                 player.factories.append(5)
                 player.money -= FACTORY_HALFPRICE
-                print(f"{player.name} ordered a factory construction (-{d(FACTORY_HALFPRICE)})")
+                self.out += f"{player.name} ordered a factory construction (-{d(FACTORY_HALFPRICE)})\n"
             else:
-                print(f"{player.name} asked for factory construction but had not enough funds (only ${player.money})")
-        print("=== Factories have been ordered ===")
+                self.out += f"{player.name} asked for factory construction but had not enough funds (only ${player.money})\n"
+        self.out += "=== Factories have been ordered ===\n"
 
     def handle_expenses(self) -> None:
-        print(b("=== Paying Expenses ==="))
+        self.out += b("=== Paying Expenses ===\n")
         nonbankrupts_before_paying = self.get_list_of_non_bankrupt_players()
         for idx, p in enumerate(nonbankrupts_before_paying):
             original_money = p.money
@@ -270,12 +275,12 @@ class ManagementGame:
                 p.money -= factory_expense
                 expenses_str += f"Factories maintenance: -{d(factory_expense)} = {factory_n}pc * {d(EXPENSE_FACTORY)}"
             
-            print(f"{p.name}: {d(original_money)} -> {d(p.money)}")
-            print(f"Total: {d(-original_money + p.money)}")
-            print(expenses_str)
+            self.out += f"{p.name}: {d(original_money)} -> {d(p.money)}\n"
+            self.out += f"Total: {d(-original_money + p.money)}\n"
+            self.out += expenses_str + "\n"
             if idx == len(nonbankrupts_before_paying) - 1:
-                print() # Player separator
-            print("=== Expenses paid ===")
+                self.out += "\n" # Player separator
+            self.out += "=== Expenses paid ===\n"
     
     def register_player_turn(self, p_id: int, turn_data: "PlayerTurnData") -> None:
         self.player_turns[p_id] = turn_data
@@ -333,6 +338,15 @@ class PlayerTurnData(TypedDict):
     bid_products: tuple[int, int]       # (number, price_for_each)
     request_building: int               # Number of factories to build
     request_production: int             # Produce using n factories
+
+    # @staticmethod
+    # def to_dict(cls, data: "PlayerTurnData"):
+    #     return {
+    #         "bid_raws": data.bid_raws,
+    #         "bid_products": data.bid_products,
+    #         "request_building": data.request_building,
+    #         "request_production": data.request
+    #     }
 
 # class Message(TypedDict):
 #     bid_raws: tuple[int, int]           # (number, price_for_each)
