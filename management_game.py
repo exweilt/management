@@ -2,6 +2,7 @@ from math import floor
 from constants import *
 from utils import fmt_dollars as d, fmt_bold as b
 from typing import TypedDict
+import random
 
 class ManagementGame:
     def __init__(self):
@@ -111,6 +112,7 @@ class ManagementGame:
     def sell_raws(self):
         raws_to_sell = self.get_bank_selling_info()[0]
         bids = {p_id : turn["bid_raws"] for (p_id, turn) in self.player_turns.items() if "bid_raws" in turn}
+        bids = {p_id : (bid[0], max(bid[1], self.get_bank_selling_info()[1])) for p_id, bid in bids.items()}
 
         while raws_to_sell > 0:
             if len(bids) == 0:
@@ -141,6 +143,7 @@ class ManagementGame:
     def buy_goods(self):
         goods_to_buy = self.get_bank_buying_info()[0]
         bids: dict = {p_id : turn["bid_products"] for (p_id, turn) in self.player_turns.items() if "bid_products" in turn}
+        bids = {p_id : (bid[0], min(bid[1], self.get_bank_buying_info()[1])) for p_id, bid in bids.items()}
 
         while goods_to_buy > 0:
             if len(bids) == 0:
@@ -219,6 +222,12 @@ class ManagementGame:
 
         self.buy_goods()
 
+        # Factories continue construction
+        for p in self.players:
+            for idx, month_left in enumerate(p.factories):
+                if month_left >= 1:
+                    p.factories[idx] -= 1
+
         self.out += "===============================\n"
         self.order_factories()
 
@@ -233,6 +242,7 @@ class ManagementGame:
 
         self.out += f"\nMonth {self.month} finished!\n\n"
         self.month += 1
+        self.economy_level = random.randint(1, 5)
 
 
     def get_player_by_id(self, id: int) -> "Player":
@@ -274,6 +284,10 @@ class ManagementGame:
                 factory_expense = factory_n * EXPENSE_FACTORY
                 p.money -= factory_expense
                 expenses_str += f"Factories maintenance: -{d(factory_expense)} = {factory_n}pc * {d(EXPENSE_FACTORY)}"
+            
+            for factory in [f for f in p.factories if f == 1]:
+                p.money -= FACTORY_HALFPRICE
+                expenses_str += "Factory construction finish: {d(-FACTORY_HALFPRICE)}\n"
             
             self.out += f"{p.name}: {d(original_money)} -> {d(p.money)}\n"
             self.out += f"Total: {d(-original_money + p.money)}\n"
