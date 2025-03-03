@@ -332,6 +332,9 @@ class Player:
         print(f"{d(self.money)} dollars")
         print(f"{b(self.raw)} raw materials")
         print(f"{self.product} goods")
+    
+    def __repr__(self):
+        return f"{self.name}:{self.id} {d(self.money)}"
 
 class PlayerTurnData(TypedDict):
     bid_raws: tuple[int, int]           # (number, price_for_each)

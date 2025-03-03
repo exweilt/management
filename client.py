@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     print("Connected.")
     name = input("Enter your name: ")
-
+    id = 0
     
     client_socket.send((json.dumps({
         "type": "register_player",
@@ -57,6 +57,11 @@ if __name__ == "__main__":
 
     game_state = request_game_state(client_socket)
     mangame = ManagementGame.from_dict(game_state)
+
+    id = [p for p in mangame.players if p.name == name][0].id
+    # print(id)
+    # print(mangame.players)
+    # print(mangame.players[id].name)
     while True:
         mangame.print_info()
 
@@ -110,16 +115,12 @@ if __name__ == "__main__":
 
         print(mangame.out)
 
-        # mangame.register_player_turn(p.id, player_turn)
-
-    while True:
-        sockets_list = [sys.stdin, client_socket]
-        read_sockets, _, _ = select.select(sockets_list, [], [])
-
-        for socks in read_sockets:
-            if socks == client_socket:
-                message = socks.recv(1024).decode()
-                print(message, end='')
-            else:
-                message = sys.stdin.readline()
-                client_socket.send(message.encode())
+        # Only 2 players
+        if mangame.get_number_of_non_bankrupt_players() <= 1:
+            print("Game Finished.")
+            break
+    if mangame.get_player_by_id(id).money < 0:
+        print(f"{b(name)}, you lost!")
+    else:
+        print(f"{b(name)}, you win!")
+    
