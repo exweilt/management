@@ -7,7 +7,7 @@ from management_game import Player, ManagementGame, PlayerTurnData
 from constants import *
 from utils import fmt_dollars as d, fmt_bold as b
 
-HOST = 'localhost'
+HOST = '0.0.0.0'
 PORT = 12345
 
 def broadcast_message(sender_socket, message):

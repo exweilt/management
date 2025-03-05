@@ -7,7 +7,7 @@ from management_game import Player, ManagementGame, PlayerTurnData
 from constants import *
 from utils import fmt_dollars as d, fmt_bold as b
 
-HOST = 'localhost'
+HOST = '127.0.0.1'
 PORT = 12345
 
 def request_game_state(sock: socket.socket) -> str:
@@ -72,6 +72,7 @@ if __name__ == "__main__":
         if produce_request.isdigit():
             produce_number: int = int(produce_request)
             player_turn["request_production"] = produce_number
+        # print("\033[H\033[J")
 
         print("Do you want to build a factory?")
         print(f"The factory will start operating in {b(5)} months "
@@ -79,6 +80,7 @@ if __name__ == "__main__":
         factory_build_request: str = input("(y/n): ")
         if factory_build_request.lower() == "y":
             player_turn["request_building"] = 1
+        # print("\033[H\033[J")
 
         print("\nNow it's time to make the bids on the auction!")
         # raw_info = mangame.get_bank_selling_info()
@@ -94,6 +96,7 @@ if __name__ == "__main__":
             player_turn["bid_raws"] = (raw_num_request, raw_price_request)
         except:
             pass
+        # print("\033[H\033[J")
 
         try:
             product_sell_num = int(input("Product: how many do you want to sell: "))
@@ -101,6 +104,7 @@ if __name__ == "__main__":
             player_turn["bid_products"] = (product_sell_num, product_sell_price)
         except:
             pass
+        # print("\033[H\033[J")
         
         # print(f"{b(p.name)}'s turn finished.")
 
